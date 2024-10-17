@@ -20,4 +20,5 @@ This is not an official library endorsed by the device manufacturer. Renogy and 
  - [corbinbs/solarshed](https://github.com/corbinbs/solarshed)
  - [Rover 20A/40A Charge Controller—MODBUS Protocol](https://github.com/cyrils/renogy-bt/files/12787920/ROVER.MODBUS.pdf)
  - [Lithium Iron Battery BMS Modbus Protocol V1.7](https://github.com/cyrils/renogy-bt/files/12444500/Lithium.Iron.Battery.BMS.Modbus.Protocol.V1.7.zh-CN.en.1.pdf)
- - [The original Renogy BT project](https://github.com/cyrils/renogy-bt) - This current project is effectively a port of cyrils' work to make it run on ESPHome. None of this would be possible without the groundwork that was laid there.
+ - [The original Renogy BT project](https://github.com/cyrils/renogy-bt) - This project is based on cyrils' code and research. None of this would be possible without the groundwork that was laid there.
+ - [Initial gist code](https://gist.github.com/mateuszdrab/922c760582fce29d63608a1a405c541b) by [mateuszdrab](https://github.com/mateuszdrab) - initial code that runs on ESPHome shared in issue https://github.com/cyrils/renogy-bt/issues/49#issuecomment-2254464569
