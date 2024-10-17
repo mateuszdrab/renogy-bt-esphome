@@ -1,6 +1,6 @@
 esphome:
   name: renogy-batteries
-  includes: 
+  includes:
     - renogy_battery_utilities.h
 
 esp32:
@@ -34,13 +34,125 @@ wifi:
   ssid: "my_ssid"
   password: "some_other_secret" # it is recommended that you put this in a secrets.yaml file and reference it here
 
-    
 esp32_ble_tracker:
   scan_parameters:
     # We currently use the defaults to ensure Bluetooth
     # can co-exist with WiFi. In the future we may be able to
     # enable the built-in coexistence logic in ESP-IDF
     active: true
+
+switch:
+  - platform: ble_client
+    ble_client_id: renogy_battery_esp32_bc
+    name: "BLE Client"
+    entity_category: "DIAGNOSTIC"
+    restore_mode: ALWAYS_ON
+
+ble_client:
+  - mac_address: ${ble_mac_address} # this pulls the value from the substitution entry above
+    name: Renogy Battery
+    id: renogy_battery_esp32_bc
+    auto_connect: true
+    on_connect:
+      then:
+        - logger.log:
+            format: "BLE client connected to battery"
+            level: DEBUG
+    on_disconnect:
+      then:
+        - logger.log:
+            format: "BLE client disconnected from battery"
+            level: DEBUG
+
+# every 30 seconds, pull each battery with a 5s delay between each one. todo: update these timings as needed
+interval:
+  - interval: 60s
+    then:
+      # Request battery info for each battery
+
+      - ble_client.ble_write:
+          characteristic_uuid: "FFD1"
+          service_uuid: "FFD0"
+
+          id: renogy_battery_esp32_bc
+          value: !lambda |-
+            vector<uint8_t> request = GetBatteryRequest(${battery_id_1}, BatterySection::BATTERY_INFO);
+            id(last_requested_battery_section) = static_cast<uint16_t>(BatterySection::BATTERY_INFO);                   
+            return request;
+
+      - delay: 5s
+
+      - ble_client.ble_write:
+          characteristic_uuid: "FFD1"
+          service_uuid: "FFD0"
+
+          id: renogy_battery_esp32_bc
+          value: !lambda |-
+            vector<uint8_t> request = GetBatteryRequest(${battery_id_2}, BatterySection::BATTERY_INFO);
+            id(last_requested_battery_section) = static_cast<uint16_t>(BatterySection::BATTERY_INFO);                   
+            return request;
+
+      - delay: 5s
+
+      - ble_client.ble_write:
+          characteristic_uuid: "FFD1"
+          service_uuid: "FFD0"
+
+          id: renogy_battery_esp32_bc
+          value: !lambda |-
+            vector<uint8_t> request = GetBatteryRequest(${battery_id_3}, BatterySection::BATTERY_INFO);
+            id(last_requested_battery_section) = static_cast<uint16_t>(BatterySection::BATTERY_INFO);                   
+            return request;
+
+      # Request cell voltages for each battery
+
+      - delay: 5s
+
+      - ble_client.ble_write:
+          characteristic_uuid: "FFD1"
+          service_uuid: "FFD0"
+
+          id: renogy_battery_esp32_bc
+          value: !lambda |-
+            vector<uint8_t> request = GetBatteryRequest(${battery_id_1}, BatterySection::CELL_VOLT_INFO);
+            id(last_requested_battery_section) = static_cast<uint16_t>(BatterySection::CELL_VOLT_INFO);                   
+            return request;
+
+      - delay: 5s
+
+      - ble_client.ble_write:
+          characteristic_uuid: "FFD1"
+          service_uuid: "FFD0"
+
+          id: renogy_battery_esp32_bc
+          value: !lambda |-
+            vector<uint8_t> request = GetBatteryRequest(${battery_id_2}, BatterySection::CELL_VOLT_INFO);
+            id(last_requested_battery_section) = static_cast<uint16_t>(BatterySection::CELL_VOLT_INFO);                   
+            return request;
+
+      - delay: 5s
+
+      - ble_client.ble_write:
+          characteristic_uuid: "FFD1"
+          service_uuid: "FFD0"
+
+          id: renogy_battery_esp32_bc
+          value: !lambda |-
+            vector<uint8_t> request = GetBatteryRequest(${battery_id_3}, BatterySection::CELL_VOLT_INFO);
+            id(last_requested_battery_section) = static_cast<uint16_t>(BatterySection::CELL_VOLT_INFO);                   
+            return request;
+
+binary_sensor:
+  - platform: ble_presence
+    mac_address: ${ble_mac_address} # this pulls the value from the substitution entry above
+    name: "Renogy BLE Presence"
+    entity_category: "DIAGNOSTIC"
+
+globals:
+  - id: last_requested_battery_section
+    type: uint16_t
+    restore_value: no
+    initial_value: "0"
 
 sensor:
   # Renogy battery 1
@@ -69,14 +181,42 @@ sensor:
     name: "Renogy Battery ${battery_id_1} Total Capacity"
     id: renogy_battery_${battery_id_1}_total_capacity
     unit_of_measurement: Ah
-    accuracy_decimals: 1    
+    accuracy_decimals: 1
 
   - platform: template
     name: "Renogy Battery ${battery_id_1} Charge Level"
     id: renogy_battery_${battery_id_1}_charge_level
     icon: mdi:percent
     unit_of_measurement: "%"
-    accuracy_decimals: 1    
+    accuracy_decimals: 1
+
+  - platform: template
+    name: "Renogy Battery ${battery_id_1} Cell 1 Voltage"
+    id: renogy_battery_${battery_id_1}_cell_1_voltage
+    unit_of_measurement: V
+    accuracy_decimals: 1
+    entity_category: "DIAGNOSTIC"
+
+  - platform: template
+    name: "Renogy Battery ${battery_id_1} Cell 2 Voltage"
+    id: renogy_battery_${battery_id_1}_cell_2_voltage
+    unit_of_measurement: V
+    accuracy_decimals: 1
+    entity_category: "DIAGNOSTIC"
+
+  - platform: template
+    name: "Renogy Battery ${battery_id_1} Cell 3 Voltage"
+    id: renogy_battery_${battery_id_1}_cell_3_voltage
+    unit_of_measurement: V
+    accuracy_decimals: 1
+    entity_category: "DIAGNOSTIC"
+
+  - platform: template
+    name: "Renogy Battery ${battery_id_1} Cell 4 Voltage"
+    id: renogy_battery_${battery_id_1}_cell_4_voltage
+    unit_of_measurement: V
+    accuracy_decimals: 1
+    entity_category: "DIAGNOSTIC"
 
   # Renogy battery 2
   - platform: template
@@ -103,14 +243,14 @@ sensor:
     name: "Renogy Battery ${battery_id_2} Total Capacity"
     id: renogy_battery_${battery_id_2}_total_capacity
     unit_of_measurement: Ah
-    accuracy_decimals: 1    
+    accuracy_decimals: 1
 
   - platform: template
     name: "Renogy Battery ${battery_id_2} Charge Level"
     id: renogy_battery_${battery_id_2}_charge_level
     icon: mdi:percent
     unit_of_measurement: "%"
-    accuracy_decimals: 1    
+    accuracy_decimals: 1
 
   # Renogy battery 3
   - platform: template
@@ -137,15 +277,14 @@ sensor:
     name: "Renogy Battery ${battery_id_3} Total Capacity"
     id: renogy_battery_${battery_id_3}_total_capacity
     unit_of_measurement: Ah
-    accuracy_decimals: 1    
+    accuracy_decimals: 1
 
   - platform: template
     name: "Renogy Battery ${battery_id_3} Charge Level"
     id: renogy_battery_${battery_id_3}_charge_level
     icon: mdi:percent
     unit_of_measurement: "%"
-    accuracy_decimals: 1    
-
+    accuracy_decimals: 1
 
   - platform: ble_client
     ble_client_id: renogy_battery_esp32_bc
@@ -157,83 +296,19 @@ sensor:
     notify: true
     update_interval: never
 
-    # on_notify: 
-    #   then:
-    #     - lambda: |-
-    #         ESP_LOGD("ble_client.notify", "x: %.2f", x);
-
-    lambda: |-      
+    lambda: |-
       // A variable x of type esp32_ble_tracker::ESPBTDevice is passed to the automation for use in lambdas. (from docs)
       // it actually behaves like a byte array though, so I'm not sure about those docs...
-      
+
       int receivedSize = x.size();
       ESP_LOGD("ble_client_lambda", "Received bytes size: %d", receivedSize);
 
-      // Log each byte in the array
-      for (size_t i = 0; i < receivedSize; ++i) {
-        ESP_LOGD("main", "Response Byte %d: 0x%02X", i, x[i]);
-      }
+      // Battery name override (if using a single battery and no need to differentiate)
+      // Comment this out if you have multiple batteries and want to use the battery name from the device ID as prefix
+      string *batteryName = new string();
+      // *batteryName = nullptr; // use the battery name from the device ID as prefix
 
-      // if something went wrong, we didn't get the data we expected, so bail out here
-      if (receivedSize < 17) return NAN;
-
-      // parse the data using this method from renogy_utilities.h
-      HandleBatteryData(x);
+      // parse the data using this method from renogy_battery_utilities.h
+      HandleBatteryData(x, static_cast<BatterySection>(id(last_requested_battery_section)), batteryName);
 
       return 0.0; // this sensor isn't actually used other than to hook into raw value and publish to template sensors
-
-
-ble_client:
-  - mac_address: ${ble_mac_address} # this pulls the value from the substitution entry above
-    name: Renogy Battery
-    id: renogy_battery_esp32_bc   
-    auto_connect: true 
-    on_connect:
-      then:
-        - logger.log: 
-            format: "BLE client connected to battery"
-            level: DEBUG
-    on_disconnect:
-      then:
-        - logger.log: 
-            format: "BLE client disconnected from battery"
-            level: DEBUG
-
-# every 30 seconds, pull each battery with a 5s delay between each one. todo: update these timings as needed
-interval:
-  - interval: 30s
-    then:
-      - ble_client.ble_write: 
-          characteristic_uuid: "FFD1"
-          service_uuid: "FFD0"
-          
-          id: renogy_battery_esp32_bc
-          value: !lambda |-
-                    vector<uint8_t> request = GetBatteryRequest(${battery_id_1});
-                    return request;
-
-      - delay: 5s
-      - ble_client.ble_write: 
-          characteristic_uuid: "FFD1"
-          service_uuid: "FFD0"
-          
-          id: renogy_battery_esp32_bc
-          value: !lambda |-
-                    vector<uint8_t> request = GetBatteryRequest(${battery_id_2});
-                    return request;
-
-      - delay: 5s
-      - ble_client.ble_write: 
-          characteristic_uuid: "FFD1"
-          service_uuid: "FFD0"
-          
-          id: renogy_battery_esp32_bc
-          value: !lambda |-
-                    vector<uint8_t> request = GetBatteryRequest(${battery_id_3});
-                    return request;                   
-
-binary_sensor:
-  - platform: ble_presence
-    mac_address: ${ble_mac_address} # this pulls the value from the substitution entry above
-    name: "Renogy BLE Presence"
-    entity_category: "DIAGNOSTIC"
